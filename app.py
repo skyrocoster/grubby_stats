@@ -2,14 +2,30 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 import time
+import pandas as pd
+from sqlalchemy import inspect
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///grubby.db"
 db = SQLAlchemy(app)
 app_context = app.app_context()
 app_context.push()
-app.secret_key = "1234567A"
+# app.secret_key = "1234567A"
 
+def object_as_df(results):
+    dict_result = []
+
+    for result in results:
+        new_row = {
+            c.key: getattr(result, c.key) for c in inspect(result).mapper.column_attrs
+        }
+        dict_result.append(new_row)
+
+    df = pd.DataFrame(dict_result)
+    return df
+
+def object_as_dict(obj):
+    return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
 
 class PlayerMatches(db.Model):
 
@@ -87,6 +103,13 @@ class Heroes(db.Model):
     nuker = db.Column(db.Boolean, default=0)
     pusher = db.Column(db.Boolean, default=0)
     jungler = db.Column(db.Boolean, default=0)
+
+    def hero_map(self):
+        heroes = self.query.all()
+        h_dict = {}
+        for hero in heroes:
+            h_dict[hero.hero_id] = hero.localized_name
+        return h_dict
 
 
 class GameModes(db.Model):

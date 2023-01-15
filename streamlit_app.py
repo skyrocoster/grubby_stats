@@ -1,14 +1,28 @@
-# @Email:  contact@pythonandvba.com
-# @Website:  https://pythonandvba.com
-# @YouTube:  https://youtube.com/c/CodingIsFun
-# @Project:  Sales Dashboard w/ Streamlit
+import streamlit as st
+from app import *
 
+# app = Flask(__name__)
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///grubby.db"
+# db = SQLAlchemy(app)
+app_context = app.app_context()
+app_context.push()
+app.secret_key = "1234567A"
 
+header = st.container()
+dataset = st.container()
+features = st.container()
 
-import pandas as pd  # pip install pandas openpyxl
-import plotly.express as px  # pip install plotly-express
-import streamlit as st  # pip install streamlit
+df = object_as_df(PlayerMatches().query.all())
+df["hero_name"] = df["hero_id"].map(Heroes().hero_map())
 
-# emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
-st.set_page_config(page_title="Sales Dashboard", page_icon=":bar_chart:", layout="wide")
+st.sidebar.header("Grubby Data")
+hero = st.sidebar.multiselect(
+    "Select Hero:",
+    options=df["hero_name"].sort_values().unique(),
+    default=df["hero_name"].sort_values().unique(),
+)
+game_mode = st.sidebar.multiselect("Select Lobby Type", options=[0, 7], default=7)
 
+df_sel = df.query("hero_name == @hero & lobby_type == @game_mode")
+
+st.dataframe(df_sel)
