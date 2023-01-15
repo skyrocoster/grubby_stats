@@ -72,5 +72,3 @@ for row in df_dict:
     new_fields = MatchPlayers(**row)
     db.session.merge(new_fields)
 db.session.commit()
-
-print(df.head())

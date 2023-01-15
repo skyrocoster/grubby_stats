@@ -164,6 +164,7 @@ class PickBans(db.Model):
     team = db.Column(db.String(10))
     order = db.Column(db.Integer)
 
+
 class NetworthTimings(db.Model):
     __tablename__ = "networth_timings"
 
@@ -175,4 +176,5 @@ class NetworthTimings(db.Model):
     last_hits = db.Column(db.Integer)
 
 
-db.create_all()
+if __name__ == "__main__":
+    db.create_all()

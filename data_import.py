@@ -2,6 +2,7 @@ import json
 from app import *
 import os
 import pandas as pd
+from sqlalchemy import inspect
 
 raw_data = "data"
 
@@ -64,7 +65,6 @@ match_detail_fields = [
     "radiant_win",
     "start_time",
     "patch",
-    "region",
 ]
 
 df = pd.DataFrame()
@@ -77,7 +77,7 @@ for match in unretrieved_id:
         df_temp = pd.json_normalize(data)
         df = pd.concat([df, df_temp[match_detail_fields]])
     except:
-        print(f"{match} failed")
+        print(f"{match} failed 3")
 
 match_details = df.to_dict(orient="records")
 
@@ -109,7 +109,6 @@ match_player_fields = [
     "lobby_type",
     "game_mode",
     "patch",
-    "region",
     "isRadiant",
 ]
 
@@ -142,7 +141,7 @@ for match_id in unretrieved_id:
             db.session.merge(new_matchplayer)
             db.session.commit()
     except:
-        print(f"{match_id} failed")
+        print(f"{match_id} failed 4")
 
 
 retrieved_matches = [
@@ -170,7 +169,7 @@ for match_id in unretrieved_id:
             db.session.merge(new_pick)
             db.session.commit()
     except:
-        print(f"{match_id} failed")
+        print(f"{match_id} failed 1")
 
 retrieved_matches = [
     int(x.replace(".json", "")) for x in os.listdir("data/grubby/matches/MatchDetails")
@@ -193,15 +192,16 @@ for match_id in unretrieved_id:
             new_player = {}
             new_player["player_id"] = player.pop("account_id")
             new_player["match_id"] = match_id
-            for i in player["gold_t"]:
-                new_player["minute"] = player["gold_t"].index(i)
-                new_player["gold"] = i
-                new_player["last_hits"] = player["lh_t"][player["gold_t"].index(i)]
-                new_networthtimings = NetworthTimings(**new_player)
-                db.session.merge(new_networthtimings)
-            db.session.commit()
+            if player['gold_t'] is not None:
+                for i in player["gold_t"]:
+                    new_player["minute"] = player["gold_t"].index(i)
+                    new_player["gold"] = i
+                    new_player["last_hits"] = player["lh_t"][player["gold_t"].index(i)]
+                    new_networthtimings = NetworthTimings(**new_player)
+                    db.session.merge(new_networthtimings)
+                db.session.commit()
         except:
-            print(f"{match_id} failed")
+            print(f"{match_id} failed 2")
 
 
 def object_as_dict(obj):
