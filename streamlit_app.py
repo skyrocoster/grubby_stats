@@ -1,3 +1,5 @@
+# ERRR BLOODSEEKER?!
+
 import streamlit as st
 from app import *
 import plotly_express as px  #
@@ -77,8 +79,8 @@ ranks = st.sidebar.slider(
 
 grubby_matches_sel = grubby_matches.loc[
     (grubby_matches["hero_name"].isin(hero))
-    & (grubby_matches["average_rank"] >= ranks[0])
-    & (grubby_matches["average_rank"] <= ranks[1])
+    # & (grubby_matches["average_rank"] >= ranks[0])
+    # & (grubby_matches["average_rank"] <= ranks[1])
     & (grubby_matches["lobby_type"].isin(game_mode))
 ]
 
@@ -150,11 +152,13 @@ with hero_wr_col2:
 
 # PLAYER MATCHES
 
-
+st.markdown("""---""")
+st.title("Other Player Winrates")
 
 match_players = object_as_df(MatchPlayers().query.all())
 match_players["player_id"] = match_players["player_id"].fillna(0).astype(int)
 match_players = match_players.loc[match_players["match_id"].isin(match_id_sel)]
+match_players["hero_name"] = match_players["hero_id"].map(Heroes().hero_map())
 grubby_match_players = match_players.loc[match_players["player_id"] == grubby_id].copy(
     deep=True
 )
@@ -167,6 +171,41 @@ team_dict = dict(zip(grubby_matches_sel.match_id, grubby_matches_sel.team))
 other_match_players["ally"] = other_match_players.apply(
     lambda x: 1 if x["team"] == team_dict.get(x["match_id"]) else 0, axis=1
 )
-# grubby_lanes = df_matchplayers.loc[df_matchplayers['player_id'] == grubby_id]
-# grubby_lanes = grubby_lanes[['match_id','lane_role']]
-# grubby_lanes = dict(zip(grubby_lanes.match_id, grubby_lanes.lane_role))
+
+tab1, tab2 = st.tabs(["Allies", "Opponents"])
+
+ally_wr = (
+    other_match_players[["hero_name", "ally", "win"]]
+    .loc[other_match_players["ally"] == 1]
+    .groupby("hero_name")
+    .mean()
+    .reset_index()
+    .sort_values("win", ascending=False)
+)
+allies = px.bar(ally_wr, x="hero_name", y="win")
+with tab1:
+    ally_wr_col1, ally_wr_col2 = st.columns(2)
+    with ally_wr_col1:
+        st.subheader("Ally Heroes")
+        st.plotly_chart(allies)
+    with ally_wr_col2:
+        st.dataframe(ally_wr[["hero_name", "win"]])
+
+
+oppo_wr = (
+    other_match_players[["hero_name", "ally", "win"]]
+    .loc[other_match_players["ally"] == 0]
+    .groupby("hero_name")
+    .mean()
+    .reset_index()
+    .sort_values("win", ascending=True)
+)
+oppo_wr["win"] = 1 - oppo_wr["win"]
+allies = px.bar(oppo_wr, x="hero_name", y="win")
+with tab2:
+    oppo_wr_col1, oppo_wr_col2 = st.columns(2)
+    with oppo_wr_col1:
+        st.subheader("Opponent Heroes")
+        st.plotly_chart(allies)
+    with oppo_wr_col2:
+        st.dataframe(oppo_wr[["hero_name", "win"]])
