@@ -8,6 +8,8 @@ app_context.push()
 app.secret_key = "1234567A"
 
 st.set_page_config(layout="wide")
+grubby_id = 849473199
+
 header = st.container()
 dataset = st.container()
 features = st.container()
@@ -80,6 +82,7 @@ grubby_matches_sel = grubby_matches.loc[
     & (grubby_matches["lobby_type"].isin(game_mode))
 ]
 
+match_id_sel = grubby_matches_sel["match_id"]
 
 see_data = st.expander("Raw Data Here!")
 with see_data:
@@ -144,3 +147,26 @@ with hero_wr_col2:
     st.title("Win Rates Table")
     st.text(win_loss)
     st.dataframe(hero_wr)
+
+# PLAYER MATCHES
+
+
+
+match_players = object_as_df(MatchPlayers().query.all())
+match_players["player_id"] = match_players["player_id"].fillna(0).astype(int)
+match_players = match_players.loc[match_players["match_id"].isin(match_id_sel)]
+grubby_match_players = match_players.loc[match_players["player_id"] == grubby_id].copy(
+    deep=True
+)
+other_match_players = match_players.loc[match_players["player_id"] != grubby_id].copy(
+    deep=True
+)
+
+
+team_dict = dict(zip(grubby_matches_sel.match_id, grubby_matches_sel.team))
+other_match_players["ally"] = other_match_players.apply(
+    lambda x: 1 if x["team"] == team_dict.get(x["match_id"]) else 0, axis=1
+)
+# grubby_lanes = df_matchplayers.loc[df_matchplayers['player_id'] == grubby_id]
+# grubby_lanes = grubby_lanes[['match_id','lane_role']]
+# grubby_lanes = dict(zip(grubby_lanes.match_id, grubby_lanes.lane_role))
